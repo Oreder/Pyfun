@@ -10,6 +10,7 @@ HANDLE = c_void_p
 # Constants
 DEBUG_PROCESS = 0x00000001
 CREATE_NEW_CONSOLE = 0x00000010
+PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
 
 # Structures for CreateProcessA() function
 class STARTUPINFO(Structure):
