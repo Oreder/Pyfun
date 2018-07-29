@@ -51,7 +51,6 @@ class debugger():
             print "[*] Error: 0x%08x." % kernel32.GetLastError()
             
     def open_process(self, pid):
-        PROCESS_ALL_ACCESS = 0x001F0FFF
         h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
         return h_process
     
