@@ -8,6 +8,8 @@ class debugger():
         self.h_process = None
         self.pid = None
         self.debugger_active = False
+        self.h_thread = None
+        self.context = None
     
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the process
@@ -77,11 +79,13 @@ class debugger():
         continue_status = DBG_CONTINUE
         
         if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
-            # We aren't going to build any event handlers
-            # just yet. Let's just resume the process for now.
-            # raw_input("Press a key to continue...")
-            # self.debugger_active = False
-            
+            # Let's obtain the thread and context information
+            self.h_thread = self.open_thread(debug_event.dwThreadID)
+            self.context = self.get_thread_context(self.h_thread)
+
+            print "Event code: %d Process ID: %d Thread ID: %d" % \
+                  (debug_event.dwDebugEventCode, debug_event.dwProcessID, debug_event.dwThreadID)
+
             kernel32.ContinueDebugEvent(debug_event.dwProcessID,\
                                         debug_event.dwThreadID,\
                                         continue_status)
