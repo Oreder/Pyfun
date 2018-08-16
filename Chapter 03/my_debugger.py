@@ -5,12 +5,14 @@ kernel32 = windll.kernel32
 
 class debugger():
     def __init__(self):
-        self.h_process = None
-        self.pid = None
-        self.debugger_active = False
-        self.h_thread = None
-        self.context = None
-    
+        self.h_process          = None
+        self.pid                = None
+        self.debugger_active    = False
+        self.h_thread           = None
+        self.context            = None
+        self.exception          = None
+        self.exception_address  = None
+
     def load(self, path_to_exe):
         # dwCreation flag determines how to create the process
         # set creation_flags = CREATE_NEW_CONSOLE if you want
@@ -86,6 +88,22 @@ class debugger():
             print "Event code: %d Process ID: %d Thread ID: %d" % \
                   (debug_event.dwDebugEventCode, debug_event.dwProcessID, debug_event.dwThreadID)
 
+            # If the event code is an exception, we want to examine it further
+            if debug_event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT:
+                # Just obtain the exception code
+                exception = debug_event.u.Exception.ExceptionRecord.ExceptionCode
+                self.exception_address = debug_event.u.Exception.ExceptionRecord.ExceptionAddress
+
+                if exception == EXCEPTION_ACCESS_VIOLATION:
+                    print "Access Violation Detected."
+                elif exception == EXCEPTION_BREAKPOINT:
+                    # If a breakpoint is detected, we call an internal handler
+                    continue_status = self.exception_handler_breakpoint()
+                elif exception == EXCEPTION_GUARD_PAGE:
+                    print "Guard Page Access Detected."
+                elif exception == EXCEPTION_SINGLE_STEP:
+                    print "Single Stepping."
+
             kernel32.ContinueDebugEvent(debug_event.dwProcessID,\
                                         debug_event.dwThreadID,\
                                         continue_status)
@@ -137,3 +155,8 @@ class debugger():
             return context
         else:
             return False
+
+    def exception_handler_breakpoint(self):
+        print "[*] Inside the breakpoint handler."
+        print "Exception Address: 0x%08x" % self.exception_address
+        return DBG_CONTINUE
